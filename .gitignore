@@ -1,0 +1,13 @@
+# Node & React
+node_modules/
+dist/
+
+# Python & FastAPI
+venv/
+env/
+__pycache__/
+
+# Security & Temp Files
+.env
+temp_uploads/
+.DS_Store

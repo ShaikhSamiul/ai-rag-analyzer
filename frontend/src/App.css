@@ -1,0 +1,137 @@
+/* --- GLOBAL RESET & BASE STYLES --- */
+* {
+  box-sizing: border-box; /* Ensures padding doesn't affect element width */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #f4f4f9; /* Soft off-white for a clean background */
+  color: #333; /* Dark gray text for high contrast readability */
+}
+
+/* --- MAIN LAYOUT CONTAINERS --- */
+.app-container {
+  max-width: 1000px; /* Constrains app width on large ultra-wide monitors */
+  margin: 0 auto; /* Centers the container on the screen */
+  padding: 2rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.main-content {
+  display: flex;
+  gap: 2rem; /* Creates even spacing between the two columns */
+}
+
+/* --- REUSABLE COLUMN STYLES --- */
+/* Applies to both the left upload side and right chat side */
+.upload-section, .chat-section {
+  flex: 1; /* Ensures both columns take up equal space (50/50) */
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05); /* Subtle drop shadow for depth */
+}
+
+/* --- UPLOAD COMPONENT STYLES --- */
+.upload-box {
+  border: 2px dashed #ccc; /* Dashed border indicates a drop-zone visually */
+  border-radius: 8px;
+  padding: 3rem 1rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease; /* Smooth hover animation */
+}
+
+.upload-box:hover {
+  border-color: #0066ff; /* Highlights blue when hovered */
+}
+
+.hidden-input {
+  display: none; /* Hides the ugly default HTML file input */
+}
+
+.upload-label {
+  cursor: pointer;
+  color: #0066ff;
+  font-weight: 600;
+}
+
+.process-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #0066ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.process-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed; /* Visual cue that the button cannot be clicked yet */
+}
+
+/* --- CHAT COMPONENT STYLES --- */
+.chat-window {
+  height: 300px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+}
+
+.placeholder-text {
+  color: #888;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 0.5rem; /* Spaces the input field and the send button */
+}
+
+.chat-input-area input {
+  flex: 1; /* Input takes up remaining space next to the button */
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.chat-input-area button {
+  padding: 0.75rem 1.5rem;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+/* --- RESPONSIVE DESIGN (MOBILE & TABLET) --- */
+@media (max-width: 768px) {
+  /* 1. Stack the columns vertically */
+  .main-content {
+    flex-direction: column; 
+  }
+  
+  /* 2. Reduce the massive outer margins so it fits nicely on phone screens */
+  .app-container {
+    padding: 1rem; 
+  }
+
+  /* 3. Slightly tighten the inner padding of the boxes */
+  .upload-section, .chat-section {
+    padding: 1.5rem; 
+  }
+}
