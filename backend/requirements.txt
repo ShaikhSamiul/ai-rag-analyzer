@@ -6,7 +6,5 @@ python-dotenv
 pydantic
 langchain
 langchain-google-genai
-langchain-huggingface
 langchain-pinecone
 langchain-text-splitters
-sentence-transformers
