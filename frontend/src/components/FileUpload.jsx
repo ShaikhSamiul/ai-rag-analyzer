@@ -70,9 +70,13 @@ export default function FileUploader({ isFileProcessed, onProcessSuccess }) {
      */
     const handleProcess = async () => {
         setIsProcessing(true);
+        
+        const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
         try {
             const formData = new FormData();
             formData.append("file", file);
+            formData.append("session_id", newSessionId);
 
             const response = await fetch("https://ai-rag-analyzer-api.onrender.com/upload", {
                 method: "POST",
@@ -87,12 +91,11 @@ export default function FileUploader({ isFileProcessed, onProcessSuccess }) {
             // eslint-disable-next-line no-unused-vars
             const data = await response.json();
             
-            // Trigger temporary success notification
             setToastMessage(`Success! Document processed and ready for chat.`);
             setTimeout(() => setToastMessage(null), 3000); 
 
             if (onProcessSuccess) {
-                onProcessSuccess();
+                onProcessSuccess(newSessionId);
             }
 
         } catch (err) {

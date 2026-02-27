@@ -1,7 +1,7 @@
 import os
 import shutil
 import PyPDF2
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -28,7 +28,7 @@ app = FastAPI(
 # Configure CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ai-rag-analyzer.vercel.app"],  # Note: Update this to the specific frontend domain in production
+    allow_origins=["https://ai-rag-analyzer.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +45,7 @@ llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview", temperature=0.3)
 class ChatRequest(BaseModel):
     """Pydantic model for incoming chat requests."""
     question: str
+    session_id: str
 
 def extract_text_from_pdf(filepath: str) -> str:
     """
@@ -79,7 +80,7 @@ def chunk_text(raw_text: str) -> list:
         list: A list of Document objects containing the chunked text.
     """
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
+        chunk_size=2000,
         chunk_overlap=200,
         length_function=len
     )
@@ -90,7 +91,7 @@ def format_docs(docs) -> str:
     return "\n\n".join(doc.page_content for doc in docs)
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), session_id: str = Form(...)):
     """
     Endpoint to handle PDF uploads, extract text, vectorize chunks, 
     and store them in the Pinecone vector database.
@@ -117,7 +118,8 @@ async def upload_file(file: UploadFile = File(...)):
         PineconeVectorStore.from_documents(
             document_chunks,
             embeddings,
-            index_name=PINECONE_INDEX_NAME
+            index_name=PINECONE_INDEX_NAME,
+            namespace=session_id
         )
         print("INFO: Vectors successfully uploaded to Pinecone!")
         
@@ -139,7 +141,8 @@ async def chat_with_document(request: ChatRequest):
     try:
         vectorstore = PineconeVectorStore(
             index_name=PINECONE_INDEX_NAME,
-            embedding=embeddings
+            embedding=embeddings,
+            namespace=request.session_id
         )
         
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})

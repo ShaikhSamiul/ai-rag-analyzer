@@ -13,6 +13,12 @@ import ChatInterface from './components/ChatInterface';
 export default function App() {
   // Tracks the lifecycle of the uploaded document to synchronize child components
   const [isFileProcessed, setIsFileProcessed] = useState(false);
+  const [sessionId, setSessionId] = useState("");
+
+  const handleProcessSuccess = (newSessionId) => {
+      setSessionId(newSessionId);
+      setIsFileProcessed(true);
+  };
 
   return (
     <div className="app-container">
@@ -24,11 +30,12 @@ export default function App() {
       <main className="main-content">
         <FileUploader 
             isFileProcessed={isFileProcessed} 
-            onProcessSuccess={() => setIsFileProcessed(true)} 
+            onProcessSuccess={handleProcessSuccess} 
         />
 
         <ChatInterface 
             isFileProcessed={isFileProcessed} 
+            sessionId={sessionId}
         />
       </main>
     </div>

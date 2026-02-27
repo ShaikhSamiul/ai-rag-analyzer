@@ -9,7 +9,7 @@ import { useState, useEffect, useRef } from 'react';
  * @param {boolean} props.isFileProcessed - Determines if the chat interface should be enabled based on document upload status.
  * @returns {JSX.Element} The rendered ChatInterface component.
  */
-export default function ChatInterface({ isFileProcessed }) {
+export default function ChatInterface({ isFileProcessed, sessionId }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +46,7 @@ export default function ChatInterface({ isFileProcessed }) {
             const response = await fetch("https://ai-rag-analyzer-api.onrender.com/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: userMessage.text }),
+                body: JSON.stringify({ question: userMessage.text, session_id: sessionId }),
             });
 
             if (!response.ok) throw new Error("Failed to retrieve an answer from the AI service.");
