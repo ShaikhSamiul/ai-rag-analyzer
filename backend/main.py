@@ -28,7 +28,7 @@ app = FastAPI(
 # Configure CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Note: Update this to the specific frontend domain in production
+    allow_origins=["https://ai-rag-analyzer.vercel.app"],  # Note: Update this to the specific frontend domain in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
