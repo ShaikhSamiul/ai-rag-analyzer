@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import FileUploader from './components/FileUpload';
 import ChatInterface from './components/ChatInterface';
+import ServerStatusBanner from './components/ServerStatusBanner'; // <-- Import the new banner
 
 /**
  * Root application component for the AI Document Analyzer.
@@ -22,6 +23,10 @@ export default function App() {
 
   return (
     <div className="app-container">
+      
+      {/* Drop the self-managing banner component here at the top */}
+      <ServerStatusBanner /> 
+
       <header className="header">
         <h1>AI Document Analyzer</h1>
         <p>Upload a PDF and ask questions about its content.</p>
