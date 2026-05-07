@@ -17,7 +17,7 @@ export default function ServerStatusBanner() {
 
             try {
                 // Ping the lightweight health endpoint
-                await fetch("https://ai-rag-analyzer-api.onrender.com/health");
+                await fetch("https://ai-rag-analyzer-api.onrender.com/wakeup");
             } catch (error) {
                 console.error("Backend health check failed:", error);
             } finally {

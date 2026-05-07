@@ -174,7 +174,7 @@ async def chat_with_document(request: ChatRequest):
         print(f"CRITICAL ERROR: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.get("/health")
-async def health_check():
+@app.get("/wakeup")
+async def wake_up():
     """Lightweight endpoint to wake up the Render free tier container."""
     return {"status": "awake"}
