@@ -17,7 +17,7 @@ export default function ServerStatusBanner() {
 
             try {
                 // Ping the lightweight health endpoint
-                await fetch("https://ai-rag-analyzer-api.onrender.com/wakeup");
+                await fetch(`${import.meta.env.VITE_API_BASE_URL}/wakeup`);
             } catch (error) {
                 console.error("Backend health check failed:", error);
             } finally {

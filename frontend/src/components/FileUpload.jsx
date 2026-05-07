@@ -78,7 +78,7 @@ export default function FileUploader({ isFileProcessed, onProcessSuccess }) {
             formData.append("file", file);
             formData.append("session_id", newSessionId);
 
-            const response = await fetch("https://ai-rag-analyzer-api.onrender.com/upload", {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload`, {
                 method: "POST",
                 body: formData,
             });
