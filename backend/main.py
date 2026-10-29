@@ -185,7 +185,12 @@ async def chat_with_document(request: ChatRequest):
         
         template = """Use the following pieces of retrieved context to answer the question. 
         If you don't know the answer, just say that you don't know. 
-        Keep the answer concise and professional.
+        Keep the answer concise, informative, and professional.
+        
+        At the very end of your response, provide exactly two concise, relevant follow-up questions that the user might want to explore next based on this document context. Format them strictly like this:
+        ---FOLLOW_UPS---
+        - [First follow-up question]
+        - [Second follow-up question]
         
         Context: {context}
         
@@ -197,14 +202,32 @@ async def chat_with_document(request: ChatRequest):
         
         # Execute synthesis chain using retrieved context
         synthesis_chain = prompt | llm | StrOutputParser()
-        answer = synthesis_chain.invoke({
+        raw_answer = synthesis_chain.invoke({
             "context": context_text,
             "question": request.question
         })
         
+        clean_answer = raw_answer
+        follow_ups = []
+        
+        if "---FOLLOW_UPS---" in raw_answer:
+            parts = raw_answer.split("---FOLLOW_UPS---")
+            clean_answer = parts[0].strip()
+            if len(parts) > 1:
+                lines = parts[1].strip().split("\n")
+                for line in lines:
+                    line_clean = line.strip().lstrip("-*•0123456789. ")
+                    if line_clean and len(line_clean) > 5:
+                        if not line_clean.endswith("?"):
+                            line_clean += "?"
+                        follow_ups.append(line_clean)
+                        
+        follow_ups = follow_ups[:2]
+        
         return {
-            "answer": answer,
-            "sources": sources
+            "answer": clean_answer,
+            "sources": sources,
+            "follow_ups": follow_ups
         }
     except Exception as e:
         print(f"CRITICAL ERROR: {str(e)}") 

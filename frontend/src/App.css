@@ -219,13 +219,14 @@ body::before {
   color: var(--text-secondary);
 }
 
+.chat-action-btn,
 .clear-chat-btn,
 .export-chat-btn {
   background: transparent;
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   color: var(--text-tertiary);
-  padding: 0.2rem 0.55rem;
+  padding: 0.22rem 0.55rem;
   font-size: 0.75rem;
   font-weight: 500;
   display: inline-flex;
@@ -235,16 +236,25 @@ body::before {
   transition: all 0.15s ease;
 }
 
-.clear-chat-btn:hover {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-  border-color: var(--danger-border);
-}
-
+.chat-action-btn:hover,
 .export-chat-btn:hover {
   background: rgba(59, 130, 246, 0.12);
   color: #93c5fd;
   border-color: rgba(59, 130, 246, 0.35);
+}
+
+.chat-action-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.25);
+}
+
+.chat-action-btn.danger-hover:hover,
+.clear-chat-btn:hover {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
 }
 
 /* ==========================================================================
@@ -930,13 +940,128 @@ body::before {
   margin: 0;
 }
 
-/* Copy Button in AI Message Bubble */
+/* Dynamic Follow-up Suggestions */
+.follow-ups-container {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.follow-ups-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.45rem;
+}
+
+.follow-ups-title svg {
+  color: var(--accent-primary);
+}
+
+.follow-ups-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.follow-up-chip {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: 8px;
+  color: #93c5fd;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.follow-up-chip svg {
+  color: var(--text-tertiary);
+  transition: transform 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.follow-up-chip:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: #3b82f6;
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.follow-up-chip:hover:not(:disabled) svg {
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.follow-up-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Actions Bar in AI Message Bubble: Feedback & Copy */
 .bubble-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 0.5rem;
   padding-top: 0.4rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feedback-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.feedback-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feedback-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.feedback-btn:active {
+  transform: scale(0.92);
+}
+
+.feedback-btn.active-up {
+  color: #34d399;
+  background-color: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.3);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.25);
+}
+
+.feedback-btn.active-down {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.25);
 }
 
 .copy-btn {

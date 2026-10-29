@@ -12,14 +12,15 @@ const SUGGESTIONS = [
  * Features:
  * - Active document context header badge
  * - Auto-expanding multi-line textarea with hidden native scrollbar
- * - Global keyboard shortcut (/ or Ctrl+K) to focus input
+ * - Global keyboard shortcuts (/ or Ctrl+K to focus input, Ctrl+F for search)
+ * - In-conversation search bar with match counter and navigation
+ * - Context-aware dynamic follow-up suggestion chips
+ * - Message feedback micro-interactions (thumbs up / thumbs down)
  * - Floating "Scroll to Latest" down-arrow button
  * - Export chat conversation to Markdown (.md)
  * - Grounding Source Context Accordion showing Pinecone chunks
  * - Real-time word-by-word typewriter response streaming with terminal cursor
- * - Quick prompt suggestion chips
- * - Copy-to-clipboard for AI answers
- * - Conversation clear button
+ * - Quick prompt suggestion chips & conversation clear button
  *
  * @param {Object} props
  * @param {boolean} props.isFileProcessed - Determines if chat is active.
@@ -64,7 +65,7 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
         }
     }, [messages, isLoading, isStreaming]);
 
-    // Global keyboard shortcut: press "/" or "Ctrl+K" / "Cmd+K" to focus chat textarea
+    // Global keyboard shortcut: "/" or "Ctrl+K" / "Cmd+K" to focus chat textarea
     useEffect(() => {
         const handleGlobalKeyDown = (e) => {
             if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -155,6 +156,7 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
             const data = await response.json();
             const fullAnswer = data.answer || "I could not find an answer in the document.";
             const sources = Array.isArray(data.sources) ? data.sources : [];
+            const followUps = Array.isArray(data.follow_ups) ? data.follow_ups : [];
 
             // Switch from loading spinner to typewriter stream
             setIsLoading(false);
@@ -166,7 +168,7 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
             let chunkIdx = 0;
 
             // Append empty placeholder AI message
-            setMessages((prev) => [...prev, { role: 'ai', text: '', streaming: true, sources: [] }]);
+            setMessages((prev) => [...prev, { role: 'ai', text: '', streaming: true, sources: [], followUps: [], feedback: null }]);
 
             streamIntervalRef.current = setInterval(() => {
                 if (chunkIdx < chunks.length) {
@@ -180,11 +182,13 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                             text: streamedText,
                             streaming: true,
                             sources: [],
+                            followUps: [],
+                            feedback: null,
                         };
                         return next;
                     });
                 } else {
-                    // Streaming complete: attach full text and context sources
+                    // Streaming complete: attach full text, context sources, and follow-up prompts
                     clearInterval(streamIntervalRef.current);
                     streamIntervalRef.current = null;
                     setIsStreaming(false);
@@ -195,6 +199,8 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                             role: 'ai',
                             text: fullAnswer,
                             sources: sources,
+                            followUps: followUps,
+                            feedback: null,
                             streaming: false,
                         };
                         return next;
@@ -222,6 +228,19 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
         navigator.clipboard.writeText(text);
         setCopiedIndex(index);
         setTimeout(() => setCopiedIndex(null), 2000);
+    };
+
+    // Message feedback toggling (thumbs up / thumbs down)
+    const handleFeedback = (index, type) => {
+        setMessages((prev) => {
+            const next = [...prev];
+            const current = next[index]?.feedback;
+            next[index] = {
+                ...next[index],
+                feedback: current === type ? null : type
+            };
+            return next;
+        });
     };
 
     const handleClearChat = () => {
@@ -288,12 +307,12 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                     </svg>
                     <span>Contextual Q&A</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     {messages.length > 0 && !isLoading && !isStreaming && (
                         <>
                             <button
                                 type="button"
-                                className="export-chat-btn"
+                                className="chat-action-btn"
                                 onClick={handleExportChat}
                                 title="Export conversation as Markdown"
                             >
@@ -306,7 +325,7 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                             </button>
                             <button
                                 type="button"
-                                className="clear-chat-btn"
+                                className="chat-action-btn danger-hover"
                                 onClick={handleClearChat}
                                 title="Clear conversation history"
                             >
@@ -331,7 +350,7 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                 </div>
             )}
             
-            {/* Chat Window with Floating Jump to Latest Button */}
+            {/* Chat Window Container */}
             <div className="chat-window-container">
                 <div className="chat-window" ref={chatWindowRef} onScroll={handleScroll}>
                     {messages.length === 0 ? (
@@ -415,14 +434,68 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                                                     </div>
                                                 </details>
                                             )}
+
+                                            {/* Dynamic Follow-up Suggestions */}
+                                            {!msg.streaming && msg.followUps && msg.followUps.length > 0 && (
+                                                <div className="follow-ups-container">
+                                                    <div className="follow-ups-title">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                                        </svg>
+                                                        <span>Suggested Follow-ups</span>
+                                                    </div>
+                                                    <div className="follow-ups-chips">
+                                                        {msg.followUps.map((promptText, pIdx) => (
+                                                            <button
+                                                                key={pIdx}
+                                                                type="button"
+                                                                className="follow-up-chip"
+                                                                onClick={() => sendQuestion(promptText)}
+                                                                disabled={isLoading || isStreaming}
+                                                            >
+                                                                <span>{promptText}</span>
+                                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                                                </svg>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </>
                                     ) : (
                                         msg.text
                                     )}
 
-                                    {/* Copy Button for AI Messages (visible when not streaming) */}
+                                    {/* Actions Bar for AI Messages: Feedback Buttons & Copy Button */}
                                     {msg.role === 'ai' && !msg.streaming && (
                                         <div className="bubble-actions">
+                                            <div className="feedback-buttons">
+                                                <button
+                                                    type="button"
+                                                    className={`feedback-btn ${msg.feedback === 'up' ? 'active-up' : ''}`}
+                                                    onClick={() => handleFeedback(index, 'up')}
+                                                    title="Helpful response"
+                                                    aria-label="Thumbs up"
+                                                >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill={msg.feedback === 'up' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`feedback-btn ${msg.feedback === 'down' ? 'active-down' : ''}`}
+                                                    onClick={() => handleFeedback(index, 'down')}
+                                                    title="Unhelpful response"
+                                                    aria-label="Thumbs down"
+                                                >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill={msg.feedback === 'down' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+
                                             <button
                                                 type="button"
                                                 className="copy-btn"
@@ -507,7 +580,7 @@ export default function ChatInterface({ isFileProcessed, sessionId, activeDocNam
                 </div>
             )}
             
-            {/* Auto-expanding input area with hidden scrollbar and keyboard support */}
+            {/* Auto-expanding input area with hidden scrollbar */}
             <form onSubmit={(e) => { e.preventDefault(); sendQuestion(); }} className="chat-input-area">
                 <div className="chat-input-wrapper">
                     <textarea 
