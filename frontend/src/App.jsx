@@ -2,7 +2,6 @@ import { useState } from 'react';
 import './App.css';
 import FileUploader from './components/FileUpload';
 import ChatInterface from './components/ChatInterface';
-import ServerStatusBanner from './components/ServerStatusBanner'; // <-- Import the new banner
 
 /**
  * Root application component for the AI Document Analyzer.
@@ -15,32 +14,38 @@ export default function App() {
   // Tracks the lifecycle of the uploaded document to synchronize child components
   const [isFileProcessed, setIsFileProcessed] = useState(false);
   const [sessionId, setSessionId] = useState("");
+  const [activeDocName, setActiveDocName] = useState("");
 
-  const handleProcessSuccess = (newSessionId) => {
-      setSessionId(newSessionId);
-      setIsFileProcessed(true);
+  const handleProcessSuccess = (newSessionId, docName) => {
+    setSessionId(newSessionId);
+    if (docName) setActiveDocName(docName);
+    setIsFileProcessed(true);
+  };
+
+  const handleReset = () => {
+    setIsFileProcessed(false);
+    setSessionId("");
+    setActiveDocName("");
   };
 
   return (
     <div className="app-container">
-      
-      {/* Drop the self-managing banner component here at the top */}
-      <ServerStatusBanner /> 
-
       <header className="header">
         <h1>AI Document Analyzer</h1>
-        <p>Upload a PDF and ask questions about its content.</p>
+        <p>Upload any PDF document to analyze, extract context, and converse in real-time.</p>
       </header>
       
       <main className="main-content">
         <FileUploader 
-            isFileProcessed={isFileProcessed} 
-            onProcessSuccess={handleProcessSuccess} 
+          isFileProcessed={isFileProcessed} 
+          onProcessSuccess={handleProcessSuccess} 
+          onReset={handleReset}
         />
 
         <ChatInterface 
-            isFileProcessed={isFileProcessed} 
-            sessionId={sessionId}
+          isFileProcessed={isFileProcessed} 
+          sessionId={sessionId}
+          activeDocName={activeDocName}
         />
       </main>
     </div>

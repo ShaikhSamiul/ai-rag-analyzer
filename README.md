@@ -6,6 +6,18 @@ A full-stack Retrieval-Augmented Generation (RAG) application that allows users 
 * **Frontend:** [https://ai-rag-analyzer.vercel.app](https://ai-rag-analyzer.vercel.app)
 * **API Backend:** Hosted securely on Render
 
+## Documentation Index
+Comprehensive technical documentation is available across the repository:
+* **[AGENTS.md](./AGENTS.md)** — AI agent operating instructions, architectural invariants, and contribution standards.
+* **[ARCHITECTURE.md](./ARCHITECTURE.md)** — System architecture, sequence diagrams, and multi-tenant data flow.
+* **[ROADMAP.md](./ROADMAP.md)** — Prioritized technical debt backlog, bug fixes, and feature milestones.
+* **[DEVELOPMENT.md](./DEVELOPMENT.md)** — Local setup, testing, and troubleshooting guide for developers.
+* **[API_SPECIFICATION.md](./API_SPECIFICATION.md)** — Complete REST API contract, request/response schemas, and cURL examples.
+* **[Backend Guide](./backend/README.md)** — FastAPI, LangChain, and Pinecone backend service details.
+* **[Frontend Guide](./frontend/README.md)** — React 19, Vite, and component hierarchy documentation.
+
+---
+
 ## System Architecture
 This project implements a modern, decoupled RAG architecture:
 1. **Document Ingestion:** Users upload a PDF via the React frontend.
@@ -41,6 +53,8 @@ This project implements a modern, decoupled RAG architecture:
 
 ## Local Installation
 
+Refer to **[DEVELOPMENT.md](./DEVELOPMENT.md)** for a detailed walkthrough.
+
 ### Prerequisites
 * Python 3.11+
 * Node.js & npm
@@ -56,7 +70,7 @@ pip install -r requirements.txt
 ```
 
 ### Environment Variables
-To run this project locally, you will need to add the following environment variables to your `.env` file in the `backend` folder:
+Configure your `.env` file in the `backend` folder (refer to `backend/.env.example`):
 
 ```env
 PINECONE_API_KEY=your_pinecone_api_key_here
@@ -64,8 +78,8 @@ PINECONE_INDEX_NAME=your_index_name_here
 GOOGLE_API_KEY=your_gemini_api_key_here
 ```
 
-### Start the server
-```text
+### Start the Backend Server
+```bash
 uvicorn main:app --reload
 ```
 

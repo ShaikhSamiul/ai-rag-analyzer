@@ -25,10 +25,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS for frontend communication
+# Configure CORS for frontend communication (supports deployed production and local development)
+cors_origins_env = os.getenv(
+    "CORS_ORIGINS",
+    "https://ai-rag-analyzer.vercel.app,http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
+)
+allowed_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ai-rag-analyzer.vercel.app"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,8 +45,13 @@ UPLOAD_FOLDER = 'temp_uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize AI Models
+# Note: models/gemini-embedding-001 generates 3072-dimensional vectors matching the Pinecone index
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview", temperature=0.3)
+
+# Use stable production Gemini 2.5 Flash for high token quotas (1M TPM) and fast responses
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
+llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0.3)
 
 class ChatRequest(BaseModel):
     """Pydantic model for incoming chat requests."""
@@ -115,6 +126,7 @@ async def upload_file(file: UploadFile = File(...), session_id: str = Form(...))
         
         print(f"INFO: Created {len(document_chunks)} total chunks. Generating vectors...")
         
+        # Ingest into Pinecone under the unique session namespace
         PineconeVectorStore.from_documents(
             document_chunks,
             embeddings,
@@ -125,6 +137,13 @@ async def upload_file(file: UploadFile = File(...), session_id: str = Form(...))
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temporary uploaded file to prevent server storage bloat
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception as cleanup_err:
+                print(f"WARNING: Could not remove temporary file {filepath}: {cleanup_err}")
     
     return {
         "message": "File successfully uploaded and processed.",
@@ -136,7 +155,8 @@ async def upload_file(file: UploadFile = File(...), session_id: str = Form(...))
 async def chat_with_document(request: ChatRequest):
     """
     Endpoint to handle user questions. Retrieves relevant context from Pinecone 
-    and generates an AI response using the RAG architecture.
+    and generates an AI response using the RAG architecture, returning both
+    the synthesized answer and the grounding context sources.
     """
     try:
         vectorstore = PineconeVectorStore(
@@ -146,6 +166,22 @@ async def chat_with_document(request: ChatRequest):
         )
         
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+        
+        # Retrieve grounding context documents explicitly from Pinecone
+        retrieved_docs = retriever.invoke(request.question)
+        context_text = format_docs(retrieved_docs)
+        
+        # Structure context sources for client-side grounding inspection
+        sources = []
+        for idx, doc in enumerate(retrieved_docs):
+            snippet = doc.page_content.strip()
+            if len(snippet) > 300:
+                snippet = snippet[:300] + "..."
+            sources.append({
+                "id": idx + 1,
+                "content": snippet,
+                "metadata": getattr(doc, "metadata", {})
+            })
         
         template = """Use the following pieces of retrieved context to answer the question. 
         If you don't know the answer, just say that you don't know. 
@@ -159,17 +195,17 @@ async def chat_with_document(request: ChatRequest):
         
         prompt = PromptTemplate.from_template(template)
         
-        # Build the LangChain Expression Language (LCEL) pipeline
-        rag_chain = (
-            {"context": retriever | format_docs, "question": RunnablePassthrough()}
-            | prompt
-            | llm
-            | StrOutputParser()
-        )
+        # Execute synthesis chain using retrieved context
+        synthesis_chain = prompt | llm | StrOutputParser()
+        answer = synthesis_chain.invoke({
+            "context": context_text,
+            "question": request.question
+        })
         
-        answer = rag_chain.invoke(request.question)
-        
-        return {"answer": answer}
+        return {
+            "answer": answer,
+            "sources": sources
+        }
     except Exception as e:
         print(f"CRITICAL ERROR: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))
